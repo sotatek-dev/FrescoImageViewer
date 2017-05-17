@@ -18,6 +18,7 @@ import com.stfalcon.frescoimageviewer.adapter.ViewHolder;
 import com.stfalcon.frescoimageviewer.drawee.ZoomableDraweeView;
 
 import java.util.HashSet;
+import java.util.List;
 
 import me.relex.photodraweeview.OnScaleChangeListener;
 
@@ -44,6 +45,25 @@ class ImageViewerAdapter
         this.imageRequestBuilder = imageRequestBuilder;
         this.hierarchyBuilder = hierarchyBuilder;
         this.isZoomingAllowed = isZoomingAllowed;
+    }
+
+    public boolean addImage(List<?> images) {
+        return this.addImages(dataSet.getData().size(), images);
+    }
+
+    public boolean addImages(int position, List<?> images) {
+        boolean result = dataSet.addData(position, images);
+        notifyDataSetChanged();
+        return result;
+    }
+
+    public void updateImages(List<?> images) {
+        dataSet.updateData(images);
+        notifyDataSetChanged();
+    }
+
+    public Object getItem(int position) {
+        return dataSet.getData().get(position);
     }
 
     @Override

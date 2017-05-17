@@ -35,6 +35,7 @@ import com.facebook.imagepipeline.request.ImageRequestBuilder;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 
 /*
@@ -101,6 +102,10 @@ public class ImageViewer implements OnDismissListener, DialogInterface.OnKeyList
                 }
             }
         });
+    }
+
+    public void updateImages(List<?> images) {
+        viewer.updateImages(images);
     }
 
     /**
@@ -189,6 +194,15 @@ public class ImageViewer implements OnDismissListener, DialogInterface.OnKeyList
 
         public List<T> getData() {
             return data;
+        }
+
+        public boolean addData(int position, List<?> data) {
+            return this.data.addAll(position, (List<? extends T>) data);
+        }
+
+        public void updateData(List<?> data) {
+            this.data.clear();
+            this.data.addAll((List<? extends T>) data);
         }
     }
 

@@ -30,6 +30,8 @@ import android.widget.RelativeLayout;
 import com.facebook.drawee.generic.GenericDraweeHierarchyBuilder;
 import com.facebook.imagepipeline.request.ImageRequestBuilder;
 
+import java.util.List;
+
 /*
  * Created by Alexander Krol (troy379) on 29.08.16.
  */
@@ -80,6 +82,25 @@ class ImageViewerView extends RelativeLayout
                 getContext(), dataSet, customImageRequestBuilder, customDraweeHierarchyBuilder, isZoomingAllowed);
         pager.setAdapter(adapter);
         setStartPosition(startPosition);
+    }
+
+    private int scrollState;
+    private List<?> newImages;
+    public void updateImages(List<?> images) {
+        newImages = images;
+        if (scrollState == ViewPager.SCROLL_STATE_IDLE) {
+            modifyData();
+        }
+    }
+
+    protected void modifyData() {
+        if (newImages != null) {
+            Object item = adapter.getItem(pager.getCurrentItem());
+            int index = newImages.indexOf(item);
+            adapter.updateImages(newImages);
+            pager.setCurrentItem(index, false);
+        }
+        newImages = null;
     }
 
     public void setCustomImageRequestBuilder(ImageRequestBuilder customImageRequestBuilder) {
@@ -150,6 +171,26 @@ class ImageViewerView extends RelativeLayout
                     onClick(e, isOverlayWasClicked);
                 }
                 return false;
+            }
+        });
+
+        pager.addOnPageChangeListener(new ViewPager.OnPageChangeListener() {
+            @Override
+            public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
+
+            }
+
+            @Override
+            public void onPageSelected(int position) {
+
+            }
+
+            @Override
+            public void onPageScrollStateChanged(int state) {
+                scrollState = state;
+                if (state == ViewPager.SCROLL_STATE_IDLE) {
+                    modifyData();
+                }
             }
         });
     }
