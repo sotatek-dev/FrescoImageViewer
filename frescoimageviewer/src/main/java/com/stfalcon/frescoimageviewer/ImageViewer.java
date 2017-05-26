@@ -174,12 +174,12 @@ public class ImageViewer implements OnDismissListener, DialogInterface.OnKeyList
         String format(T t);
     }
 
-    static class DataSet<T> {
+    public static class DataSet<T> {
 
         private List<T> data;
         private Formatter<T> formatter;
 
-        DataSet(List<T> data) {
+        public DataSet(List<T> data) {
             this.data = data;
         }
 
@@ -203,6 +203,10 @@ public class ImageViewer implements OnDismissListener, DialogInterface.OnKeyList
         public void updateData(List<?> data) {
             this.data.clear();
             this.data.addAll((List<? extends T>) data);
+        }
+
+        public void setFormatter(Formatter<T> formatter) {
+            this.formatter = formatter;
         }
     }
 

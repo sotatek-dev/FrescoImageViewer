@@ -18,10 +18,13 @@ package com.stfalcon.frescoimageviewer;
 
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
+import android.animation.AnimatorSet;
 import android.animation.ObjectAnimator;
 import android.animation.ValueAnimator;
 import android.graphics.Rect;
+import android.util.Log;
 import android.view.MotionEvent;
+import android.view.VelocityTracker;
 import android.view.View;
 import android.view.animation.AccelerateInterpolator;
 
@@ -30,7 +33,8 @@ import android.view.animation.AccelerateInterpolator;
  */
 class SwipeToDismissListener implements View.OnTouchListener {
 
-    private static final String PROPERTY_TRANSLATION_X = "translationY";
+    private static final String PROPERTY_TRANSLATION_Y = "translationY";
+    private static final String PROPERTY_TRANSLATION_X = "translationX";
 
     private final View swipeView;
     private int translationLimit;
@@ -46,30 +50,40 @@ class SwipeToDismissListener implements View.OnTouchListener {
 
     private boolean tracking = false;
     private float startY;
+    private float startX;
+    private VelocityTracker velocityTracker = null;
 
     @Override
     public boolean onTouch(View v, MotionEvent event) {
         translationLimit = v.getHeight() / 4;
         switch (event.getAction()) {
             case MotionEvent.ACTION_DOWN:
+                velocityTracker = VelocityTracker.obtain();
+                velocityTracker.addMovement(event);
                 Rect hitRect = new Rect();
                 swipeView.getHitRect(hitRect);
                 if (hitRect.contains((int) event.getX(), (int) event.getY())) {
                     tracking = true;
                 }
                 startY = event.getY();
+                startX = event.getX();
                 return true;
             case MotionEvent.ACTION_UP:
             case MotionEvent.ACTION_CANCEL:
                 if (tracking) {
                     tracking = false;
-                    animateSwipeView(v.getHeight());
+                    animateSwipeView(v.getHeight(), velocityTracker);
                 }
+                if (velocityTracker != null) velocityTracker.recycle();
+                velocityTracker = null;
                 return true;
             case MotionEvent.ACTION_MOVE:
+                velocityTracker.addMovement(event);
                 if (tracking) {
                     float translationY = event.getY() - startY;
+                    float translationX = event.getX() - startX;
                     swipeView.setTranslationY(translationY);
+                    swipeView.setTranslationX(translationX);
                     callMoveListener(translationY, translationLimit);
                 }
                 return true;
@@ -77,23 +91,42 @@ class SwipeToDismissListener implements View.OnTouchListener {
         return false;
     }
 
-    private void animateSwipeView(int parentHeight) {
-        float currentPosition = swipeView.getTranslationY();
-        float animateTo = 0.0f;
+    private void animateSwipeView(int parentHeight, VelocityTracker velocityTracker) {
+        velocityTracker.computeCurrentVelocity(1);
+        float currentY = swipeView.getTranslationY();
+        float animateToY = 0.0f;
+        float currentX = swipeView.getTranslationX();
+        float animateToX = 0f;
 
-        if (currentPosition < -translationLimit) {
-            animateTo = -parentHeight;
-        } else if (currentPosition > translationLimit) {
-            animateTo = parentHeight;
+        float d = (float) (Math.signum(currentY)
+                * Math.sqrt(currentY * currentY + currentX * currentX));
+        if (Math.abs(velocityTracker.getYVelocity()) > 1) {
+            animateToY = Math.signum(currentY) * parentHeight;
+        } else{
+            if (d < -translationLimit) {
+                animateToY = -parentHeight;
+            } else if (d > translationLimit) {
+                animateToY = parentHeight;
+            }
         }
 
-        final boolean isDismissed = animateTo != 0.0f;
-        ObjectAnimator animator = ObjectAnimator.ofFloat(
-                swipeView, PROPERTY_TRANSLATION_X, currentPosition, animateTo);
+        float dy = animateToY - currentY;
+        if (animateToY != 0) {
+            float dx = dy / currentY * currentX;
+            animateToX = currentX + dx;
+        }
 
-        animator.setDuration(200);
-        animator.setInterpolator(new AccelerateInterpolator());
-        animator.addListener(
+        AnimatorSet animSet = new AnimatorSet();
+        final boolean isDismissed = animateToY != 0.0f;
+        ObjectAnimator animator = ObjectAnimator.ofFloat(
+                swipeView, PROPERTY_TRANSLATION_Y, currentY, animateToY);
+        ObjectAnimator animatorX = ObjectAnimator.ofFloat(
+                swipeView, PROPERTY_TRANSLATION_X, currentX, animateToX);
+        animSet.playTogether(animator, animatorX);
+
+        animSet.setDuration(200);
+        animSet.setInterpolator(new AccelerateInterpolator());
+        animSet.addListener(
                 new AnimatorListenerAdapter() {
                     @Override
                     public void onAnimationEnd(Animator animation) {
@@ -108,7 +141,7 @@ class SwipeToDismissListener implements View.OnTouchListener {
                         callMoveListener((float) animation.getAnimatedValue(), translationLimit);
                     }
                 });
-        animator.start();
+        animSet.start();
     }
 
     private void callDismissListener() {

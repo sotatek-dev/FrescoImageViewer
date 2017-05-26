@@ -35,7 +35,7 @@ import java.util.List;
 /*
  * Created by Alexander Krol (troy379) on 29.08.16.
  */
-class ImageViewerView extends RelativeLayout
+public class ImageViewerView extends RelativeLayout
         implements OnDismissListener, SwipeToDismissListener.OnViewMoveListener {
 
     private View backgroundView;
@@ -119,9 +119,13 @@ class ImageViewerView extends RelativeLayout
 
     public void setOverlayView(View view) {
         this.overlayView = view;
-        if (overlayView != null) {
-            dismissContainer.addView(view);
-        }
+//        if (overlayView != null) {
+//            dismissContainer.addView(view);
+//            ViewGroup.LayoutParams lp = view.getLayoutParams();
+//            lp.width = ViewGroup.LayoutParams.MATCH_PARENT;
+//            lp.height = ViewGroup.LayoutParams.MATCH_PARENT;
+//            view.setLayoutParams(lp);
+//        }
     }
 
     public void allowZooming(boolean allowZooming) {
@@ -234,8 +238,10 @@ class ImageViewerView extends RelativeLayout
 
     @Override
     public void onViewMove(float translationY, int translationLimit) {
-        float alpha = 1.0f - (1.0f / translationLimit / 4) * Math.abs(translationY);
-        backgroundView.setAlpha(alpha);
+        float backgroundAlpha = 1.0f - (1.0f / translationLimit / 4) * Math.abs(translationY);
+        float alpha = 1.0f - 2 * (1.0f / translationLimit / 4) * Math.abs(translationY);
+        if (alpha < 0) alpha = 0;
+        backgroundView.setAlpha(backgroundAlpha);
         if (overlayView != null) overlayView.setAlpha(alpha);
     }
 
