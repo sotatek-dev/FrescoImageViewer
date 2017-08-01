@@ -11,6 +11,7 @@ import com.facebook.drawee.backends.pipeline.PipelineDraweeControllerBuilder;
 import com.facebook.drawee.controller.BaseControllerListener;
 import com.facebook.drawee.drawable.ScalingUtils;
 import com.facebook.drawee.generic.GenericDraweeHierarchyBuilder;
+import com.facebook.imagepipeline.common.ResizeOptions;
 import com.facebook.imagepipeline.image.ImageInfo;
 import com.facebook.imagepipeline.request.ImageRequestBuilder;
 import com.stfalcon.frescoimageviewer.adapter.RecyclingPagerAdapter;
@@ -165,10 +166,12 @@ class ImageViewerAdapter
             controllerBuilder.setUri(url);
             controllerBuilder.setOldController(drawee.getController());
             controllerBuilder.setControllerListener(getDraweeControllerListener(drawee));
-            if (imageRequestBuilder != null) {
-                imageRequestBuilder.setSource(Uri.parse(url));
-                controllerBuilder.setImageRequest(imageRequestBuilder.build());
+            if (imageRequestBuilder == null) {
+                imageRequestBuilder = ImageRequestBuilder.newBuilderWithSource(Uri.parse(url));
+                imageRequestBuilder.setResizeOptions(ResizeOptions.forDimensions(1080, 1920));
             }
+            imageRequestBuilder.setSource(Uri.parse(url));
+            controllerBuilder.setImageRequest(imageRequestBuilder.build());
             drawee.setController(controllerBuilder.build());
         }
 
